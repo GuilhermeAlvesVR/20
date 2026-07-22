@@ -1,0 +1,23 @@
+{
+  "name": "Pedido de Casamento",
+  "short_name": "Pedido",
+  "description": "App para organizar o pedido de casamento",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#121212",
+  "background_color": "#121212",
+  "lang": "pt-BR",
+  "categories": ["lifestyle", "personal"],
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}

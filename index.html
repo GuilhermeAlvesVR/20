@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Pedido">
+  <meta name="theme-color" content="#121212">
+  <meta name="description" content="App para organizar o pedido de casamento">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
+  <title>Pedido de Casamento</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ===== PIN SCREEN ===== -->
+  <div id="pin-screen" class="hidden">
+    <div id="pin-create" class="hidden">
+      <div class="pin-logo">💍</div>
+      <div class="pin-title">Criar PIN</div>
+      <div class="pin-subtitle">Crie um PIN de 6 dígitos para proteger seu aplicativo</div>
+      <div class="pin-dots" id="pin-create-dots">
+        <span class="pin-dot"></span>
+        <span class="pin-dot"></span>
+        <span class="pin-dot"></span>
+        <span class="pin-dot"></span>
+        <span class="pin-dot"></span>
+        <span class="pin-dot"></span>
+      </div>
+      <div class="pin-error" id="pin-create-error"></div>
+      <div class="pin-keypad" id="pin-create-keypad"></div>
+    </div>
+
+    <div id="pin-login" class="hidden">
+      <div class="pin-logo">💍</div>
+      <div class="pin-title">Pedido de Casamento</div>
+      <div class="pin-subtitle">Digite seu PIN para continuar</div>
+      <div class="pin-dots" id="pin-login-dots">
+        <span class="pin-dot"></span>
+        <span class="pin-dot"></span>
+        <span class="pin-dot"></span>
+        <span class="pin-dot"></span>
+        <span class="pin-dot"></span>
+        <span class="pin-dot"></span>
+      </div>
+      <div class="pin-error" id="pin-login-error"></div>
+      <div class="pin-keypad" id="pin-login-keypad"></div>
+    </div>
+
+    <div id="pin-blocked" class="hidden">
+      <div class="pin-blocked">
+        <div class="pin-icon">🔒</div>
+        <div class="pin-title">Acesso Bloqueado</div>
+        <div class="pin-subtitle">Muitas tentativas incorretas. Aguarde para tentar novamente.</div>
+        <div class="pin-timer" id="pin-blocked-timer">5:00</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== APP ===== -->
+  <div id="app" class="hidden">
+    <!-- Header -->
+    <header id="app-header">
+      <h1 id="page-title">Início</h1>
+      <div class="header-actions">
+        <button class="header-btn" id="btn-contagem" aria-label="Contagem Regressiva">⏱</button>
+        <button class="header-btn" id="btn-config" aria-label="Configurações">⚙</button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content">
+
+      <!-- Dashboard -->
+      <section id="page-dashboard" class="page active">
+        <div class="days-remaining">
+          <div class="days-number" id="days-number">--</div>
+          <div class="days-label" id="days-label">dias restantes</div>
+          <div class="days-date" id="days-date"></div>
+          <div class="days-passed" id="days-passed"></div>
+        </div>
+
+        <div class="progress-section">
+          <div class="progress-header">
+            <span class="progress-label">Preparativos</span>
+            <span class="progress-percent" id="progress-percent">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <div class="progress-text" id="progress-text">Nenhum item no checklist</div>
+        </div>
+
+        <div class="next-commitment" id="next-commitment">
+          <div class="next-commitment-header">Próximo Compromisso</div>
+          <div class="next-commitment-empty" id="next-empty">Nenhum evento agendado</div>
+          <div class="next-commitment-time" id="next-time"></div>
+          <div class="next-commitment-title" id="next-title"></div>
+          <div class="next-commitment-desc" id="next-desc"></div>
+        </div>
+
+        <div class="pending-section">
+          <div class="pending-header">
+            <span>Itens Pendentes</span>
+            <span class="pending-count" id="pending-count">0</span>
+          </div>
+          <div id="pending-list"></div>
+        </div>
+      </section>
+
+      <!-- Checklist -->
+      <section id="page-checklist" class="page">
+        <div class="checklist-header">
+          <span class="checklist-counter"><strong id="checklist-done">0</strong>/<strong id="checklist-total">0</strong> concluídos</span>
+        </div>
+        <div id="checklist-list"></div>
+        <div class="checklist-add">
+          <input type="text" class="checklist-add-input" id="checklist-add-input" placeholder="Adicionar novo item..." maxlength="100">
+          <button class="checklist-add-btn" id="checklist-add-btn">Adicionar</button>
+        </div>
+      </section>
+
+      <!-- Cronograma -->
+      <section id="page-cronograma" class="page">
+        <div id="cronograma-empty" class="cronograma-empty">
+          <div class="cronograma-empty-icon">📅</div>
+          <div class="cronograma-empty-text">Nenhum evento no cronograma</div>
+          <button class="empty-state-btn" id="cronograma-empty-btn">+ Adicionar Evento</button>
+        </div>
+        <div class="cronograma-list" id="cronograma-list"></div>
+        <div class="cronograma-add-card hidden" id="cronograma-add-card">
+          <div class="cronograma-add-title">Novo Evento</div>
+          <div class="cronograma-form">
+            <div class="cronograma-form-row">
+              <input type="time" id="cronograma-add-time" placeholder="Hora">
+              <input type="text" id="cronograma-add-title" placeholder="Título" maxlength="60">
+            </div>
+            <input type="text" id="cronograma-add-desc" placeholder="Descrição (opcional)" maxlength="120">
+            <button class="cronograma-form-btn" id="cronograma-add-save">Adicionar</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Anotações -->
+      <section id="page-anotacoes" class="page">
+        <div class="notes-container">
+          <div class="notes-status" id="notes-status">Pronto</div>
+          <textarea class="notes-textarea" id="notes-textarea" placeholder="Escreva suas anotações aqui...&#10;&#10;• Ideias para o pedido&#10;• Observações importantes&#10;• Qualquer coisa que quiser lembrar" spellcheck="true"></textarea>
+        </div>
+      </section>
+
+      <!-- Configurações -->
+      <section id="page-config" class="page">
+        <div class="config-section">
+          <div class="config-section-title">Data do Pedido</div>
+          <div class="config-field">
+            <label class="config-label">Data</label>
+            <input type="date" class="config-input" id="config-date">
+          </div>
+          <div class="config-field">
+            <label class="config-label">Hora (opcional)</label>
+            <input type="time" class="config-input" id="config-time">
+          </div>
+        </div>
+
+        <div class="config-section">
+          <div class="config-section-title">Informações</div>
+          <div class="config-field">
+            <label class="config-label">Nome dela</label>
+            <input type="text" class="config-input" id="config-name" placeholder="Nome da pessoa amada" maxlength="50">
+          </div>
+          <div class="config-field">
+            <label class="config-label">Local</label>
+            <input type="text" class="config-input" id="config-location" placeholder="Onde será o pedido" maxlength="100">
+          </div>
+        </div>
+
+        <div class="config-section">
+          <div class="config-section-title">Aparência</div>
+          <div class="config-field">
+            <label class="config-label">Tema</label>
+            <select class="config-select" id="config-theme">
+              <option value="dark">Escuro</option>
+              <option value="light">Claro</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <div class="config-section-title">Segurança</div>
+          <button class="config-btn config-btn-primary" id="config-change-pin">Alterar PIN</button>
+        </div>
+
+        <div class="config-section">
+          <div class="config-section-title">Dados</div>
+          <button class="config-btn config-btn-secondary" id="config-export">📤 Exportar Dados</button>
+          <button class="config-btn config-btn-secondary" id="config-import">📥 Importar Dados</button>
+          <input type="file" class="config-file-input" id="config-file-input" accept=".json">
+          <div class="config-divider"></div>
+          <button class="config-btn config-btn-danger" id="config-reset">🗑 Limpar Todos os Dados</button>
+        </div>
+
+        <div class="config-about">
+          <div class="config-about-title">💍 Pedido de Casamento</div>
+          <div class="config-about-version">Versão 1.0.0</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Countdown Overlay -->
+    <div id="countdown-overlay" class="hidden">
+      <button class="countdown-close" id="countdown-close">✕</button>
+      <div class="countdown-heart">💍</div>
+      <div id="countdown-label" class="countdown-label">Faltam</div>
+      <div class="countdown-grid">
+        <div class="countdown-unit">
+          <div class="countdown-unit-value" id="count-days">00</div>
+          <div class="countdown-unit-label">Dias</div>
+        </div>
+        <div class="countdown-unit">
+          <div class="countdown-unit-value" id="count-hours">00</div>
+          <div class="countdown-unit-label">Horas</div>
+        </div>
+        <div class="countdown-unit">
+          <div class="countdown-unit-value" id="count-minutes">00</div>
+          <div class="countdown-unit-label">Min</div>
+        </div>
+        <div class="countdown-unit">
+          <div class="countdown-unit-value" id="count-seconds">00</div>
+          <div class="countdown-unit-label">Seg</div>
+        </div>
+      </div>
+      <div class="countdown-date" id="countdown-date"></div>
+    </div>
+
+    <!-- Tab Bar -->
+    <nav id="tab-bar">
+      <button class="tab active" data-page="dashboard">
+        <span>🏠</span>
+        <span>Início</span>
+      </button>
+      <button class="tab" data-page="checklist">
+        <span>✅</span>
+        <span>Lista</span>
+      </button>
+      <button class="tab" data-page="cronograma">
+        <span>📅</span>
+        <span>Agenda</span>
+      </button>
+      <button class="tab" data-page="anotacoes">
+        <span>📝</span>
+        <span>Notas</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Scripts (load order matters) -->
+  <script src="js/utils.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/router.js"></script>
+  <script src="js/pin.js"></script>
+  <script src="js/pages/dashboard.js"></script>
+  <script src="js/pages/checklist.js"></script>
+  <script src="js/pages/cronograma.js"></script>
+  <script src="js/pages/anotacoes.js"></script>
+  <script src="js/pages/contagem.js"></script>
+  <script src="js/pages/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

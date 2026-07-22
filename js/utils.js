@@ -95,5 +95,11 @@ const Utils = {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  },
+
+  vibrate(pattern) {
+    if (navigator.vibrate) {
+      navigator.vibrate(pattern || 10);
+    }
   }
 };

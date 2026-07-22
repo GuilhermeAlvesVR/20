@@ -16,6 +16,9 @@ const STATIC_ASSETS = [
   '/js/pages/config.js',
   '/js/app.js',
   '/icons/icon.svg',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/js/modal.js',
   '/manifest.json'
 ];
 

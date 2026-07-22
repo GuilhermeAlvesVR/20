@@ -107,10 +107,14 @@ const Config = {
     event.target.value = '';
   },
 
-  _handleReset() {
-    if (!confirm('Tem certeza? Todos os dados serão perdidos permanentemente.')) return;
-    if (!confirm('Esta ação não pode ser desfeita. Continuar?')) return;
+  async _handleReset() {
+    const first = await Modal.confirm('Limpar Dados', 'Tem certeza? Todos os dados serão perdidos permanentemente.');
+    if (!first) return;
 
+    const second = await Modal.confirm('Confirmar', 'Esta ação não pode ser desfeita. Continuar?');
+    if (!second) return;
+
+    Utils.vibrate();
     Store.clearAll();
     initializeStore();
 

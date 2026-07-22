@@ -224,26 +224,36 @@ const Cronograma = {
     });
 
     document.querySelectorAll('.cronograma-delete-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         const id = e.target.closest('.cronograma-item').dataset.id;
-        if (confirm('Remover este evento?')) {
+        const ok = await Modal.confirm('Remover evento', 'Remover este evento do cronograma?');
+        if (ok) {
           this.removeItem(id);
+          Utils.vibrate();
         }
       });
     });
   },
 
-  _promptEdit(id) {
+  async _promptEdit(id) {
     const items = Store.get('schedule', []);
     const item = items.find(i => i.id === id);
     if (!item) return;
 
-    const newTime = prompt('Hora:', item.time) || item.time;
-    const newTitle = prompt('Título:', item.title);
-    if (!newTitle) return;
-    const newDesc = prompt('Descrição:', item.desc);
+    const result = await Modal.prompt('Editar Evento', [
+      { id: 'time', label: 'Hora', value: item.time, placeholder: '--:--', type: 'time' },
+      { id: 'title', label: 'Título', value: item.title, placeholder: 'Título do evento' },
+      { id: 'desc', label: 'Descrição (opcional)', value: item.desc, placeholder: 'Descrição' }
+    ]);
 
-    this.editItem(id, newTime, newTitle.trim(), (newDesc || '').trim());
+    if (!result) return;
+    if (!result.title.trim()) {
+      Utils.showToast('O título é obrigatório');
+      return;
+    }
+
+    this.editItem(id, result.time, result.title.trim(), (result.desc || '').trim());
     Utils.showToast('Evento atualizado');
+    Utils.vibrate();
   }
 };

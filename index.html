@@ -10,7 +10,9 @@
   <meta name="description" content="App para organizar o pedido de casamento">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icons/icon.svg">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
   <title>Pedido de Casamento</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -236,6 +238,24 @@
       <div class="countdown-date" id="countdown-date"></div>
     </div>
 
+    <!-- Modal -->
+    <div id="modal" class="modal hidden" data-action="">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <span class="modal-title" id="modal-title">Título</span>
+        </div>
+        <div class="modal-body">
+          <p class="modal-message" id="modal-message"></p>
+          <div class="modal-fields" id="modal-fields"></div>
+        </div>
+        <div class="modal-footer" id="modal-footer">
+          <button class="modal-btn modal-btn-cancel" id="modal-cancel" data-action="cancel">Cancelar</button>
+          <button class="modal-btn modal-btn-confirm" id="modal-confirm" data-action="confirm">OK</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Tab Bar -->
     <nav id="tab-bar">
       <button class="tab active" data-page="dashboard">
@@ -259,6 +279,7 @@
 
   <!-- Scripts (load order matters) -->
   <script src="js/utils.js"></script>
+  <script src="js/modal.js"></script>
   <script src="js/store.js"></script>
   <script src="js/router.js"></script>
   <script src="js/pin.js"></script>

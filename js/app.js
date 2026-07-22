@@ -17,16 +17,23 @@
   Anotacoes.init();
   Contagem.init();
   Config.init();
+  Modal.init();
   Router.init();
 
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
+      Utils.vibrate(8);
       Router.navigate(tab.dataset.page);
     });
   });
 
   document.getElementById('btn-config').addEventListener('click', () => {
+    Utils.vibrate(8);
     Router.navigate('config');
+  });
+
+  document.getElementById('btn-contagem').addEventListener('click', () => {
+    Utils.vibrate(8);
   });
 
   Pin.init();

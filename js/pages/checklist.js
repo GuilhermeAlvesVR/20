@@ -129,10 +129,10 @@ const Checklist = {
         '<div class="checklist-checkbox' + (item.checked ? ' checked' : '') + '" data-action="toggle"></div>' +
         '<div class="checklist-content">' +
           '<span class="checklist-text' + (item.checked ? ' done' : '') + '">' + Utils.escapeHtml(item.text) + '</span>' +
-          (item.priority ? '<span class="checklist-priority flag-' + item.priority + '"></span>' : '') +
         '</div>' +
-        '<button class="checklist-priority-btn" data-action="priority" data-level="1">!</button>' +
-        '<button class="checklist-priority-btn high-priority" data-action="priority" data-level="2">!!</button>' +
+        '<span class="checklist-star' + (item.priority >= 1 ? ' active' : '') + '" data-action="priority" data-level="1">☆</span>' +
+        '<span class="checklist-star' + (item.priority >= 2 ? ' active' : '') + '" data-action="priority" data-level="2">☆</span>' +
+        '<span class="checklist-star' + (item.priority >= 3 ? ' active' : '') + '" data-action="priority" data-level="3">☆</span>' +
         '<button class="checklist-delete" data-action="delete">✕</button>' +
       '</div>'
     ).join('');
@@ -144,10 +144,10 @@ const Checklist = {
   _renderSortBar() {
     const current = this.getSortMethod();
     return '<div class="checklist-sort">' +
-      '<span class="checklist-sort-label">Ordenar:</span>' +
-      '<button class="checklist-sort-btn' + (current === 'manual' ? ' active' : '') + '" data-sort="manual">Manual</button>' +
-      '<button class="checklist-sort-btn' + (current === 'alpha' ? ' active' : '') + '" data-sort="alpha">A-Z</button>' +
-      '<button class="checklist-sort-btn' + (current === 'priority' ? ' active' : '') + '" data-sort="priority">!</button>' +
+      '<span class="checklist-sort-label">Ordem</span>' +
+      '<button class="checklist-sort-btn' + (current === 'manual' ? ' active' : '') + '" data-sort="manual">📋 Criados</button>' +
+      '<button class="checklist-sort-btn' + (current === 'alpha' ? ' active' : '') + '" data-sort="alpha">🔤 A-Z</button>' +
+      '<button class="checklist-sort-btn' + (current === 'priority' ? ' active' : '') + '" data-sort="priority">⭐ Prioridade</button>' +
     '</div>';
   },
 

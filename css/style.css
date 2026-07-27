@@ -741,6 +741,54 @@ input::placeholder, textarea::placeholder {
   to { opacity: 1; transform: translateX(0); }
 }
 
+.checklist-drag-handle {
+  font-size: 1rem;
+  color: var(--text-muted);
+  cursor: grab;
+  flex-shrink: 0;
+  padding: 2px;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  line-height: 1;
+  opacity: 0.4;
+  transition: opacity var(--transition);
+  letter-spacing: -2px;
+}
+
+.checklist-drag-handle:active {
+  cursor: grabbing;
+}
+
+.checklist-item:hover .checklist-drag-handle,
+.checklist-item:focus-within .checklist-drag-handle {
+  opacity: 0.8;
+}
+
+.checklist-item.dragging {
+  opacity: 0.4;
+  border-style: dashed;
+}
+
+.checklist-item.drag-before {
+  border-top: 2px solid var(--gold);
+  margin-top: 2px;
+}
+
+.checklist-item.drag-after {
+  border-bottom: 2px solid var(--gold);
+  margin-bottom: 2px;
+}
+
+.dragging-ghost {
+  transform: scale(1.02);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  border: 1px solid var(--gold) !important;
+  border-radius: var(--radius) !important;
+  pointer-events: none;
+  transition: none !important;
+}
+
 .checklist-checkbox {
   width: 24px;
   height: 24px;

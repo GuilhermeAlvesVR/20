@@ -1,6 +1,8 @@
 const Checklist = {
   _unsub: null,
   _activeItemId: null,
+  _dragSrcId: null,
+  _touchDrag: null,
 
   init() {
     this._setupEventListeners();
@@ -53,6 +55,7 @@ const Checklist = {
       checked: false,
       photo: null,
       comment: '',
+      order: items.length,
       createdAt: Date.now()
     });
     Store.set('checklist', items);
@@ -142,7 +145,7 @@ const Checklist = {
     if (method === 'alpha') {
       return [...items].sort((a, b) => a.text.localeCompare(b.text, 'pt-BR'));
     }
-    return items;
+    return [...items].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   },
 
   render() {
@@ -166,7 +169,8 @@ const Checklist = {
     const ordered = [...unchecked, ...checked];
 
     list.innerHTML = this._renderSortBar() + ordered.map(item =>
-      '<div class="checklist-item" data-id="' + item.id + '">' +
+      '<div class="checklist-item" draggable="true" data-id="' + item.id + '">' +
+        '<div class="checklist-drag-handle" data-action="drag">≡</div>' +
         '<div class="checklist-checkbox' + (item.checked ? ' checked' : '') + '" data-action="toggle"></div>' +
         (item.photo
           ? '<div class="checklist-thumb" data-action="view-photo" style="background-image:url(' + item.photo + ')"></div>'
@@ -183,13 +187,15 @@ const Checklist = {
     this._attachEvents();
     this._setupSwipe();
     this._setupPhotoPreview();
+    this._setupDragDrop();
+    this._setupTouchDrag();
   },
 
   _renderSortBar() {
     const current = this.getSortMethod();
     return '<div class="checklist-sort">' +
       '<span class="checklist-sort-label">Ordem</span>' +
-      '<button class="checklist-sort-btn' + (current === 'manual' ? ' active' : '') + '" data-sort="manual">📋 Criados</button>' +
+      '<button class="checklist-sort-btn' + (current === 'manual' ? ' active' : '') + '" data-sort="manual">📋 Manual</button>' +
       '<button class="checklist-sort-btn' + (current === 'alpha' ? ' active' : '') + '" data-sort="alpha">🔤 A-Z</button>' +
     '</div>';
   },
@@ -234,11 +240,193 @@ const Checklist = {
   },
 
   _setupPhotoPreview() {
-    document.querySelector('.photo-preview-close').addEventListener('click', () => {
-      document.getElementById('photo-preview').classList.add('hidden');
+    const el = document.querySelector('.photo-preview-close');
+    if (el) el.addEventListener('click', this._closePhotoPreview);
+    const backdrop = document.querySelector('.photo-preview-backdrop');
+    if (backdrop) backdrop.addEventListener('click', this._closePhotoPreview);
+  },
+
+  _closePhotoPreview() {
+    document.getElementById('photo-preview').classList.add('hidden');
+  },
+
+  _reorderItems(fromId, toId) {
+    const items = Store.get('checklist', []);
+    const fromIdx = items.findIndex(i => i.id === fromId);
+    const toIdx = items.findIndex(i => i.id === toId);
+    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+
+    const [moved] = items.splice(fromIdx, 1);
+    const newToIdx = items.findIndex(i => i.id === toId);
+    items.splice(newToIdx, 0, moved);
+    items.forEach((item, i) => item.order = i);
+    Store.set('checklist', items);
+  },
+
+  _setupDragDrop() {
+    const list = document.getElementById('checklist-list');
+    if (!list) return;
+
+    list.addEventListener('dragstart', (e) => {
+      const item = e.target.closest('.checklist-item');
+      if (!item) return;
+      this._dragSrcId = item.dataset.id;
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', this._dragSrcId);
     });
-    document.querySelector('.photo-preview-backdrop').addEventListener('click', () => {
-      document.getElementById('photo-preview').classList.add('hidden');
+
+    list.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const target = e.target.closest('.checklist-item');
+      if (!target || target.dataset.id === this._dragSrcId) return;
+
+      const rect = target.getBoundingClientRect();
+      const mid = rect.top + rect.height / 2;
+      if (e.clientY < mid) {
+        target.classList.add('drag-before');
+        target.classList.remove('drag-after');
+      } else {
+        target.classList.add('drag-after');
+        target.classList.remove('drag-before');
+      }
+    });
+
+    list.addEventListener('dragleave', (e) => {
+      const target = e.target.closest('.checklist-item');
+      if (target) {
+        target.classList.remove('drag-before', 'drag-after');
+      }
+    });
+
+    list.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const target = e.target.closest('.checklist-item');
+      if (!target || !this._dragSrcId) return;
+      const toId = target.dataset.id;
+      if (toId !== this._dragSrcId) {
+        this._reorderItems(this._dragSrcId, toId);
+      }
+    });
+
+    list.addEventListener('dragend', () => {
+      document.querySelectorAll('.checklist-item').forEach(el => {
+        el.classList.remove('dragging', 'drag-before', 'drag-after');
+      });
+      this._dragSrcId = null;
+    });
+  },
+
+  _setupTouchDrag() {
+    const list = document.getElementById('checklist-list');
+    if (!list) return;
+    let dragState = null;
+
+    const getItemFromPoint = (x, y) => {
+      const els = list.querySelectorAll('.checklist-item:not(.dragging-ghost)');
+      for (const el of els) {
+        const r = el.getBoundingClientRect();
+        if (y >= r.top && y <= r.bottom) return el;
+      }
+      return null;
+    };
+
+    list.addEventListener('touchstart', (e) => {
+      const handle = e.target.closest('.checklist-drag-handle');
+      if (!handle) return;
+      const item = e.target.closest('.checklist-item');
+      if (!item) return;
+
+      const touch = e.touches[0];
+      dragState = {
+        item: item,
+        id: item.dataset.id,
+        startY: touch.clientY,
+        startX: touch.clientX,
+        moved: false,
+        started: false,
+        ghost: null,
+        placeholder: null
+      };
+    }, { passive: true });
+
+    list.addEventListener('touchmove', (e) => {
+      if (!dragState) return;
+      const touch = e.touches[0];
+      const dy = touch.clientY - dragState.startY;
+      const dx = touch.clientX - dragState.startX;
+
+      if (!dragState.started) {
+        if (Math.abs(dy) < 8 && Math.abs(dx) < 8) return;
+        if (Math.abs(dx) > Math.abs(dy)) {
+          dragState = null;
+          return;
+        }
+
+        dragState.started = true;
+        dragState.moved = true;
+        this._setItemsPointerEvents('none');
+
+        const rect = dragState.item.getBoundingClientRect();
+        dragState.ghost = dragState.item.cloneNode(true);
+        dragState.ghost.classList.add('dragging-ghost');
+        dragState.ghost.style.position = 'fixed';
+        dragState.ghost.style.top = rect.top + 'px';
+        dragState.ghost.style.left = rect.left + 'px';
+        dragState.ghost.style.width = rect.width + 'px';
+        dragState.ghost.style.pointerEvents = 'none';
+        dragState.ghost.style.zIndex = '1000';
+        dragState.ghost.style.opacity = '0.9';
+        dragState.item.style.opacity = '0.3';
+        document.body.appendChild(dragState.ghost);
+      }
+
+      e.preventDefault();
+
+      if (dragState.ghost) {
+        const gh = dragState.ghost.getBoundingClientRect().height;
+        dragState.ghost.style.top = (touch.clientY - gh / 2) + 'px';
+      }
+
+      const target = getItemFromPoint(touch.clientX, touch.clientY);
+      document.querySelectorAll('.checklist-item').forEach(el => el.classList.remove('drag-before', 'drag-after'));
+      if (target && target.dataset.id !== dragState.id) {
+        const rect = target.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        target.classList.add(touch.clientY < mid ? 'drag-before' : 'drag-after');
+      }
+    }, { passive: false });
+
+    list.addEventListener('touchend', (e) => {
+      if (!dragState) return;
+
+      document.querySelectorAll('.checklist-item').forEach(el => el.classList.remove('drag-before', 'drag-after'));
+      this._setItemsPointerEvents('');
+
+      if (dragState.ghost) {
+        dragState.ghost.remove();
+      }
+      if (dragState.item) {
+        dragState.item.style.opacity = '';
+      }
+
+      if (dragState.started && dragState.id) {
+        const touch = e.changedTouches[0];
+        const target = getItemFromPoint(touch.clientX, touch.clientY);
+        if (target && target.dataset.id !== dragState.id) {
+          this._reorderItems(dragState.id, target.dataset.id);
+        }
+      }
+
+      dragState = null;
+    }, { passive: true });
+  },
+
+  _setItemsPointerEvents(val) {
+    document.querySelectorAll('.checklist-item').forEach(el => {
+      if (val) el.style.pointerEvents = val;
+      else el.style.pointerEvents = '';
     });
   },
 
@@ -248,6 +436,7 @@ const Checklist = {
       let swiping = false;
 
       item.addEventListener('touchstart', (e) => {
+        if (e.target.closest('.checklist-drag-handle')) return;
         const touch = e.touches[0];
         start.x = touch.clientX;
         start.y = touch.clientY;
@@ -255,6 +444,7 @@ const Checklist = {
       }, { passive: true });
 
       item.addEventListener('touchmove', (e) => {
+        if (e.target.closest('.checklist-drag-handle')) return;
         const touch = e.touches[0];
         const dx = touch.clientX - start.x;
         const dy = touch.clientY - start.y;

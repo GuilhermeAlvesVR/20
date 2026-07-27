@@ -84,19 +84,19 @@ const Store = {
 };
 
 const DEFAULT_CHECKLIST = [
-  { id: 'default_1', text: 'Comprar alianças', checked: false, photo: null, comment: '' },
-  { id: 'default_2', text: 'Buscar alianças', checked: false, photo: null, comment: '' },
-  { id: 'default_3', text: 'Escolher roupa', checked: false, photo: null, comment: '' },
-  { id: 'default_4', text: 'Fazer cabelo/barba', checked: false, photo: null, comment: '' },
-  { id: 'default_5', text: 'Confirmar local', checked: false, photo: null, comment: '' },
-  { id: 'default_6', text: 'Reservar restaurante', checked: false, photo: null, comment: '' },
-  { id: 'default_7', text: 'Confirmar fotógrafo', checked: false, photo: null, comment: '' },
-  { id: 'default_8', text: 'Carregar celular', checked: false, photo: null, comment: '' },
-  { id: 'default_9', text: 'Separar documentos', checked: false, photo: null, comment: '' },
-  { id: 'default_10', text: 'Separar carteira', checked: false, photo: null, comment: '' },
-  { id: 'default_11', text: 'Separar chaves', checked: false, photo: null, comment: '' },
-  { id: 'default_12', text: 'Conferir clima', checked: false, photo: null, comment: '' },
-  { id: 'default_13', text: 'Plano B', checked: false, photo: null, comment: '' }
+  { id: 'default_1', text: 'Comprar alianças', checked: false, photo: null, comment: '', order: 0 },
+  { id: 'default_2', text: 'Buscar alianças', checked: false, photo: null, comment: '', order: 1 },
+  { id: 'default_3', text: 'Escolher roupa', checked: false, photo: null, comment: '', order: 2 },
+  { id: 'default_4', text: 'Fazer cabelo/barba', checked: false, photo: null, comment: '', order: 3 },
+  { id: 'default_5', text: 'Confirmar local', checked: false, photo: null, comment: '', order: 4 },
+  { id: 'default_6', text: 'Reservar restaurante', checked: false, photo: null, comment: '', order: 5 },
+  { id: 'default_7', text: 'Confirmar fotógrafo', checked: false, photo: null, comment: '', order: 6 },
+  { id: 'default_8', text: 'Carregar celular', checked: false, photo: null, comment: '', order: 7 },
+  { id: 'default_9', text: 'Separar documentos', checked: false, photo: null, comment: '', order: 8 },
+  { id: 'default_10', text: 'Separar carteira', checked: false, photo: null, comment: '', order: 9 },
+  { id: 'default_11', text: 'Separar chaves', checked: false, photo: null, comment: '', order: 10 },
+  { id: 'default_12', text: 'Conferir clima', checked: false, photo: null, comment: '', order: 11 },
+  { id: 'default_13', text: 'Plano B', checked: false, photo: null, comment: '', order: 12 }
 ];
 
 const DEFAULT_SETTINGS = {
@@ -117,6 +117,12 @@ const DEFAULT_SETTINGS = {
 function initializeStore() {
   if (Store.get('checklist') === null) {
     Store.set('checklist', DEFAULT_CHECKLIST);
+  } else {
+    const existing = Store.get('checklist');
+    if (existing.some(i => i.order === undefined)) {
+      existing.forEach((item, i) => { if (item.order === undefined) item.order = i; });
+      Store.set('checklist', existing);
+    }
   }
   if (Store.get('schedule') === null) {
     Store.set('schedule', []);

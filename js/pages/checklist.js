@@ -1,8 +1,11 @@
 const Checklist = {
+  _unsub: null,
+
   init() {
     this._setupEventListeners();
     this.render();
     Router.on('checklist', () => this.render());
+    this._unsub = Store.on('checklist', () => this.render());
   },
 
   _setupEventListeners() {

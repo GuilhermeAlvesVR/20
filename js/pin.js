@@ -7,11 +7,50 @@ const Pin = {
     this._renderKeypad('pin-create-keypad', 'create');
     this._renderKeypad('pin-login-keypad', 'login');
 
+    this._setupRecovery();
+
     if (!this._isPinSet()) {
       this._showCreate();
     } else {
       this._showLogin();
     }
+  },
+
+  _setupRecovery() {
+    document.getElementById('pin-recover-create').addEventListener('click', () => {
+      this._switchToLogin();
+    });
+    document.getElementById('pin-recover-login').addEventListener('click', () => {
+      this._recoverPin();
+    });
+  },
+
+  _switchToLogin() {
+    this._pinBuffer = [];
+    this._clearDots('pin-login-dots');
+    document.getElementById('pin-login-error').textContent = '';
+    document.getElementById('pin-create').classList.add('hidden');
+    document.getElementById('pin-login').classList.remove('hidden');
+    this._mode = 'login';
+  },
+
+  _recoverPin() {
+    const hasData = Store.get('checklist', []).length > 0 ||
+                    Store.get('schedule', []).length > 0 ||
+                    Store.get('notes', '') !== '';
+
+    if (hasData) {
+      const confirmed = confirm('Seus dados ainda estão aqui! Quer redefinir o PIN para continuar?');
+      if (!confirmed) return;
+    }
+
+    const settings = Store.get('settings', {});
+    settings.pin = null;
+    Store.set('settings', settings);
+    this._showCreate();
+    document.getElementById('pin-recover-create').style.display = 'none';
+    document.getElementById('pin-create-subtitle').textContent =
+      'Seus dados foram preservados. Crie um novo PIN de 6 dígitos.';
   },
 
   _isPinSet() {

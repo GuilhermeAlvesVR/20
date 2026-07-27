@@ -349,6 +349,22 @@ input::placeholder, textarea::placeholder {
   color: var(--text-secondary);
 }
 
+.pin-recover {
+  display: block;
+  margin: 20px auto 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color var(--transition);
+}
+
+.pin-recover:active {
+  color: var(--gold);
+}
+
 .pin-blocked {
   text-align: center;
 }

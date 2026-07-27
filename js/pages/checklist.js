@@ -1,8 +1,4 @@
 const Checklist = {
-  _swipeX: 0,
-  _swipeId: null,
-  _swipeEl: null,
-
   init() {
     this._setupEventListeners();
     this.render();
@@ -29,13 +25,12 @@ const Checklist = {
     input.focus();
   },
 
-  addItem(text, priority) {
+  addItem(text) {
     const items = Store.get('checklist', []);
     items.push({
       id: Utils.generateId(),
       text: text,
       checked: false,
-      priority: priority || 0,
       createdAt: Date.now()
     });
     Store.set('checklist', items);
@@ -61,14 +56,6 @@ const Checklist = {
     Utils.vibrate(6);
   },
 
-  setPriority(id, level) {
-    const items = Store.get('checklist', []);
-    const item = items.find(i => i.id === id);
-    if (!item) return;
-    item.priority = item.priority === level ? 0 : level;
-    Store.set('checklist', items);
-  },
-
   getSortMethod() {
     return Store.get('checklistSort', 'manual');
   },
@@ -81,21 +68,10 @@ const Checklist = {
 
   _sortItems(items) {
     const method = this.getSortMethod();
-    const sorted = [...items];
-
-    switch (method) {
-      case 'alpha':
-        sorted.sort((a, b) => a.text.localeCompare(b.text, 'pt-BR'));
-        break;
-      case 'priority':
-        sorted.sort((a, b) => (b.priority || 0) - (a.priority || 0));
-        break;
-      case 'manual':
-      default:
-        break;
+    if (method === 'alpha') {
+      return [...items].sort((a, b) => a.text.localeCompare(b.text, 'pt-BR'));
     }
-
-    return sorted;
+    return items;
   },
 
   render() {
@@ -104,35 +80,24 @@ const Checklist = {
     const doneEl = document.getElementById('checklist-done');
     const totalEl = document.getElementById('checklist-total');
 
-    const merged = items.map(i => ({
-      ...i,
-      priority: i.priority || 0,
-      createdAt: i.createdAt || 0
-    }));
-
-    const done = merged.filter(i => i.checked).length;
+    const done = items.filter(i => i.checked).length;
     doneEl.textContent = done;
-    totalEl.textContent = merged.length;
+    totalEl.textContent = items.length;
 
-    if (merged.length === 0) {
-      list.innerHTML = '<div style="text-align:center;padding:32px 16px;color:var(--text-muted);font-style:italic;">Nenhum item na lista</div>';
+    if (items.length === 0) {
+      list.innerHTML = '<div class="checklist-empty">Nenhum item na lista</div>';
       return;
     }
 
-    const sorted = this._sortItems(merged);
+    const sorted = this._sortItems(items);
     const unchecked = sorted.filter(i => !i.checked);
     const checked = sorted.filter(i => i.checked);
     const ordered = [...unchecked, ...checked];
 
     list.innerHTML = this._renderSortBar() + ordered.map(item =>
-      '<div class="checklist-item" data-id="' + item.id + '" data-priority="' + (item.priority || 0) + '">' +
+      '<div class="checklist-item" data-id="' + item.id + '">' +
         '<div class="checklist-checkbox' + (item.checked ? ' checked' : '') + '" data-action="toggle"></div>' +
-        '<div class="checklist-content">' +
-          '<span class="checklist-text' + (item.checked ? ' done' : '') + '">' + Utils.escapeHtml(item.text) + '</span>' +
-        '</div>' +
-        '<span class="checklist-star' + (item.priority >= 1 ? ' active' : '') + '" data-action="priority" data-level="1">☆</span>' +
-        '<span class="checklist-star' + (item.priority >= 2 ? ' active' : '') + '" data-action="priority" data-level="2">☆</span>' +
-        '<span class="checklist-star' + (item.priority >= 3 ? ' active' : '') + '" data-action="priority" data-level="3">☆</span>' +
+        '<span class="checklist-text' + (item.checked ? ' done' : '') + '">' + Utils.escapeHtml(item.text) + '</span>' +
         '<button class="checklist-delete" data-action="delete">✕</button>' +
       '</div>'
     ).join('');
@@ -147,17 +112,12 @@ const Checklist = {
       '<span class="checklist-sort-label">Ordem</span>' +
       '<button class="checklist-sort-btn' + (current === 'manual' ? ' active' : '') + '" data-sort="manual">📋 Criados</button>' +
       '<button class="checklist-sort-btn' + (current === 'alpha' ? ' active' : '') + '" data-sort="alpha">🔤 A-Z</button>' +
-      '<button class="checklist-sort-btn' + (current === 'priority' ? ' active' : '') + '" data-sort="priority">⭐ Prioridade</button>' +
     '</div>';
   },
 
   _attachEvents() {
     this._attachClickEvents('toggle', (el, id) => this.toggleItem(id));
     this._attachClickEvents('delete', (el, id) => this.removeItem(id));
-    this._attachClickEvents('priority', (el, id) => {
-      const level = parseInt(el.dataset.level);
-      this.setPriority(id, level);
-    });
 
     document.querySelectorAll('.checklist-sort-btn').forEach(btn => {
       btn.addEventListener('click', () => this.setSortMethod(btn.dataset.sort));

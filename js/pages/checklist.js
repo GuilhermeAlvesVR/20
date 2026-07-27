@@ -1,8 +1,10 @@
 const Checklist = {
   _unsub: null,
+  _activeItemId: null,
 
   init() {
     this._setupEventListeners();
+    this._setupFileInput();
     this.render();
     Router.on('checklist', () => this.render());
     this._unsub = Store.on('checklist', () => this.render());
@@ -11,10 +13,26 @@ const Checklist = {
   _setupEventListeners() {
     const input = document.getElementById('checklist-add-input');
     const btn = document.getElementById('checklist-add-btn');
-
     btn.addEventListener('click', () => this._handleAdd());
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') this._handleAdd();
+    });
+  },
+
+  _setupFileInput() {
+    const fileInput = document.getElementById('file-input');
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file || !this._activeItemId) return;
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        this._setPhoto(this._activeItemId, ev.target.result);
+        this._activeItemId = null;
+        Utils.showToast('Foto adicionada');
+      };
+      reader.readAsDataURL(file);
+      fileInput.value = '';
     });
   },
 
@@ -22,7 +40,6 @@ const Checklist = {
     const input = document.getElementById('checklist-add-input');
     const text = input.value.trim();
     if (!text) return;
-
     this.addItem(text);
     input.value = '';
     input.focus();
@@ -34,6 +51,8 @@ const Checklist = {
       id: Utils.generateId(),
       text: text,
       checked: false,
+      photo: null,
+      comment: '',
       createdAt: Date.now()
     });
     Store.set('checklist', items);
@@ -57,6 +76,55 @@ const Checklist = {
     item.checked = !item.checked;
     Store.set('checklist', items);
     Utils.vibrate(6);
+  },
+
+  _setPhoto(id, dataUrl) {
+    const items = Store.get('checklist', []);
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+    item.photo = dataUrl;
+    Store.set('checklist', items);
+  },
+
+  _removePhoto(id) {
+    const items = Store.get('checklist', []);
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+    item.photo = null;
+    Store.set('checklist', items);
+    Utils.showToast('Foto removida');
+  },
+
+  _setComment(id, text) {
+    const items = Store.get('checklist', []);
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+    item.comment = text;
+    Store.set('checklist', items);
+  },
+
+  _openPhoto(id) {
+    const items = Store.get('checklist', []);
+    const item = items.find(i => i.id === id);
+    if (!item || !item.photo) return;
+
+    document.getElementById('photo-preview-img').src = item.photo;
+    document.getElementById('photo-preview').classList.remove('hidden');
+  },
+
+  _promptComment(id) {
+    const items = Store.get('checklist', []);
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+
+    Modal.prompt('Comentário', [
+      { id: 'comment', label: '', value: item.comment || '', placeholder: 'Escreva um comentário...' }
+    ]).then(result => {
+      if (result) {
+        this._setComment(id, result.comment.trim());
+        Utils.showToast('Comentário salvo');
+      }
+    });
   },
 
   getSortMethod() {
@@ -100,13 +168,21 @@ const Checklist = {
     list.innerHTML = this._renderSortBar() + ordered.map(item =>
       '<div class="checklist-item" data-id="' + item.id + '">' +
         '<div class="checklist-checkbox' + (item.checked ? ' checked' : '') + '" data-action="toggle"></div>' +
-        '<span class="checklist-text' + (item.checked ? ' done' : '') + '">' + Utils.escapeHtml(item.text) + '</span>' +
+        (item.photo
+          ? '<div class="checklist-thumb" data-action="view-photo" style="background-image:url(' + item.photo + ')"></div>'
+          : '<div class="checklist-thumb checklist-thumb-add" data-action="add-photo">📷</div>') +
+        '<div class="checklist-content" data-action="edit">' +
+          '<span class="checklist-text' + (item.checked ? ' done' : '') + '">' + Utils.escapeHtml(item.text) + '</span>' +
+          (item.comment ? '<span class="checklist-comment-badge">💬</span>' : '') +
+        '</div>' +
+        '<button class="checklist-add-comment' + (item.comment ? ' has-comment' : '') + '" data-action="comment">💬</button>' +
         '<button class="checklist-delete" data-action="delete">✕</button>' +
       '</div>'
     ).join('');
 
     this._attachEvents();
     this._setupSwipe();
+    this._setupPhotoPreview();
   },
 
   _renderSortBar() {
@@ -121,6 +197,26 @@ const Checklist = {
   _attachEvents() {
     this._attachClickEvents('toggle', (el, id) => this.toggleItem(id));
     this._attachClickEvents('delete', (el, id) => this.removeItem(id));
+    this._attachClickEvents('add-photo', (el, id) => {
+      this._activeItemId = id;
+      document.getElementById('file-input').click();
+    });
+    this._attachClickEvents('view-photo', (el, id) => this._openPhoto(id));
+    this._attachClickEvents('comment', (el, id) => this._promptComment(id));
+    this._attachClickEvents('edit', (el, id) => {
+      const items = Store.get('checklist', []);
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      Modal.prompt('Editar Item', [
+        { id: 'text', label: 'Nome', value: item.text, placeholder: 'Nome do item' }
+      ]).then(result => {
+        if (result && result.text.trim()) {
+          item.text = result.text.trim();
+          Store.set('checklist', items);
+          Utils.showToast('Item atualizado');
+        }
+      });
+    });
 
     document.querySelectorAll('.checklist-sort-btn').forEach(btn => {
       btn.addEventListener('click', () => this.setSortMethod(btn.dataset.sort));
@@ -134,6 +230,15 @@ const Checklist = {
         if (!item) return;
         handler(el, item.dataset.id);
       });
+    });
+  },
+
+  _setupPhotoPreview() {
+    document.querySelector('.photo-preview-close').addEventListener('click', () => {
+      document.getElementById('photo-preview').classList.add('hidden');
+    });
+    document.querySelector('.photo-preview-backdrop').addEventListener('click', () => {
+      document.getElementById('photo-preview').classList.add('hidden');
     });
   },
 

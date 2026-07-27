@@ -84,19 +84,19 @@ const Store = {
 };
 
 const DEFAULT_CHECKLIST = [
-  { id: 'default_1', text: 'Comprar alianças', checked: false },
-  { id: 'default_2', text: 'Buscar alianças', checked: false },
-  { id: 'default_3', text: 'Escolher roupa', checked: false },
-  { id: 'default_4', text: 'Fazer cabelo/barba', checked: false },
-  { id: 'default_5', text: 'Confirmar local', checked: false },
-  { id: 'default_6', text: 'Reservar restaurante', checked: false },
-  { id: 'default_7', text: 'Confirmar fotógrafo', checked: false },
-  { id: 'default_8', text: 'Carregar celular', checked: false },
-  { id: 'default_9', text: 'Separar documentos', checked: false },
-  { id: 'default_10', text: 'Separar carteira', checked: false },
-  { id: 'default_11', text: 'Separar chaves', checked: false },
-  { id: 'default_12', text: 'Conferir clima', checked: false },
-  { id: 'default_13', text: 'Plano B', checked: false }
+  { id: 'default_1', text: 'Comprar alianças', checked: false, photo: null, comment: '' },
+  { id: 'default_2', text: 'Buscar alianças', checked: false, photo: null, comment: '' },
+  { id: 'default_3', text: 'Escolher roupa', checked: false, photo: null, comment: '' },
+  { id: 'default_4', text: 'Fazer cabelo/barba', checked: false, photo: null, comment: '' },
+  { id: 'default_5', text: 'Confirmar local', checked: false, photo: null, comment: '' },
+  { id: 'default_6', text: 'Reservar restaurante', checked: false, photo: null, comment: '' },
+  { id: 'default_7', text: 'Confirmar fotógrafo', checked: false, photo: null, comment: '' },
+  { id: 'default_8', text: 'Carregar celular', checked: false, photo: null, comment: '' },
+  { id: 'default_9', text: 'Separar documentos', checked: false, photo: null, comment: '' },
+  { id: 'default_10', text: 'Separar carteira', checked: false, photo: null, comment: '' },
+  { id: 'default_11', text: 'Separar chaves', checked: false, photo: null, comment: '' },
+  { id: 'default_12', text: 'Conferir clima', checked: false, photo: null, comment: '' },
+  { id: 'default_13', text: 'Plano B', checked: false, photo: null, comment: '' }
 ];
 
 const DEFAULT_SETTINGS = {
